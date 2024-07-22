@@ -38,44 +38,54 @@ def part1primitives():
     p1 = Point3d(getId(), 0, 0, 0)
     assert p1.x == 0
     p1.id = getId()
-    pdb.set_trace()
     p1.attributes["key"] = "value"                 # Point3d(1001, 0, 0, 0, AttributeMap({'key': 'value'}))
     assert "key" in p1.attributes
     assert p1.attributes["key"] == "value"
 
     # the 2d/3d mechanics work too
     p2d = lanelet2.geometry.to2D(p1)
-
+    # pdb.set_trace()
     # all (common) geometry calculations are available as well:
     p2 = Point3d(getId(), 1, 0, 0)
     assert lanelet2.geometry.distance(p1, p2) == 1
     assert lanelet2.geometry.distance(p2d, Point2d(getId(), 1, 0, 1)) == 1
 
     # linestrings work conceptually similar to a list (but they only accept points, of course)
-    ls = LineString3d(getId(), [p1, p2])
+    ls = LineString3d(getId(), [p1, p2])      # LineString3d(1004, [Point3d(1001, 0, 0, 0, AttributeMap({'key': 'value'})), Point3d(1002, 1, 0, 0)])
     assert ls[0] == p1
     assert ls[-1] == p2
     assert p1 in ls
     for pt in ls:
         assert pt.y == 0
 
-    ls_inv = ls.invert()
+    ls_inv = ls.invert()    # LineString3d(1004, [Point3d(1002, 1, 0, 0), Point3d(1001, 0, 0, 0, AttributeMap({'key': 'value'}))])
     assert ls_inv[0] == p2
-    ls.append(Point3d(getId(), 2, 0, 0))
+    ls.append(Point3d(getId(), 2, 0, 0))  # LineString3d(1004, [Point3d(1001, 0, 0, 0, AttributeMap({'key': 'value'})), Point3d(1002, 1, 0, 0), Point3d(1005, 2, 0, 0)])
     del ls[2]
 
 
 def part2regulatory_elements():
     # regulatory elements profit from pythons type system
-
     # TrafficLight
     lanelet = get_a_lanelet()
-    light = get_linestring_at_y(3)
+    # Lanelet(1006, LineString3d(1007, [Point3d(1008, 0, 2, 0), Point3d(1009, 1, 2, 0), Point3d(1010, 2, 2, 0)]),
+    #         LineString3d(1011, [Point3d(1012, 0, 0, 0), Point3d(1013, 1, 0, 0), Point3d(1014, 2, 0, 0)]))
+
+    light = get_linestring_at_y(3)     # LineString3d(1015, [Point3d(1016, 0, 3, 0), Point3d(1017, 1, 3, 0), Point3d(1018, 2, 3, 0)])
     traffic_light_regelem = TrafficLight(getId(), AttributeMap(), [light])
+    # TrafficLight(1019, {
+    #     'refers': [LineString3d(1015, [Point3d(1016, 0, 3, 0), Point3d(1017, 1, 3, 0), Point3d(1018, 2, 3, 0)])]},
+    #              AttributeMap({'subtype': 'traffic_light', 'type': 'regulatory_element'}))
+
     lanelet.addRegulatoryElement(traffic_light_regelem)
-    assert traffic_light_regelem in lanelet.regulatoryElements
-    lights = [regelem for regelem in lanelet.regulatoryElements if isinstance(
-        regelem, TrafficLight)]
+    # Lanelet(1006, LineString3d(1007, [Point3d(1008, 0, 2, 0), Point3d(1009, 1, 2, 0), Point3d(1010, 2, 2, 0)]),
+    #         LineString3d(1011, [Point3d(1012, 0, 0, 0), Point3d(1013, 1, 0, 0), Point3d(1014, 2, 0, 0)]),
+    #         [ TrafficLight(1019, {'refers': [
+    #                 LineString3d(1015, [Point3d(1016, 0, 3, 0), Point3d(1017, 1, 3, 0), Point3d(1018, 2, 3, 0)])]},
+    #                          AttributeMap({'subtype': 'traffic_light', 'type': 'regulatory_element'}))])
+
+    assert traffic_light_regelem in lanelet.regulatoryElements         # [TrafficLight ....
+    lights = [regelem for regelem in lanelet.regulatoryElements if isinstance(regelem, TrafficLight)]
     assert traffic_light_regelem in lights
     assert light in lights[0].trafficLights
 
@@ -83,11 +93,20 @@ def part2regulatory_elements():
     stop_linestring = get_linestring_at_y(0)
     right_of_way_lanelets = [get_a_lanelet(), get_a_lanelet(1)]
     yielding_lanelets = [get_a_lanelet(2)]
-    right_of_way_regelem = RightOfWay(getId(),
-                                      AttributeMap(),
-                                      right_of_way_lanelets,
-                                      yielding_lanelets,
+    right_of_way_regelem = RightOfWay(getId(), AttributeMap(), right_of_way_lanelets, yielding_lanelets,
                                       stop_linestring)
+    # RightOfWay(1051, {
+    #     'ref_line': [LineString3d(1020, [Point3d(1021, 0, 0, 0), Point3d(1022, 1, 0, 0), Point3d(1023, 2, 0, 0)])],
+    #     'right_of_way': [
+    #         Lanelet(1024, LineString3d(1025, [Point3d(1026, 0, 2, 0), Point3d(1027, 1, 2, 0), Point3d(1028, 2, 2,0)]),
+    #                 LineString3d(1029, [Point3d(1030, 0, 0, 0), Point3d(1031, 1, 0, 0), Point3d(1032, 2, 0, 0)])),
+    #         Lanelet(1033, LineString3d(1034, [Point3d(1035, 0, 3, 0), Point3d(1036, 1, 3, 0), Point3d(1037, 2, 3,0)]),
+    #                 LineString3d(1038, [Point3d(1039, 0, 1, 0), Point3d(1040, 1, 1, 0), Point3d(1041, 2, 1, 0)]))],
+    #     'yield': [
+    #         Lanelet(1042, LineString3d(1043, [Point3d(1044, 0, 4, 0), Point3d(1045, 1, 4, 0), Point3d(1046, 2, 4,0)]),
+    #                 LineString3d(1047, [Point3d(1048, 0, 2, 0), Point3d(1049, 1, 2, 0), Point3d(1050, 2, 2, 0)]))]},
+    #     AttributeMap({'subtype': 'right_of_way', 'type': 'regulatory_element'}))
+    pdb.set_trace()
     map = LaneletMap()
     map.add(yielding_lanelets[0])
     map.add(right_of_way_lanelets[0])
@@ -98,10 +117,8 @@ def part2regulatory_elements():
     rightOfWays = [regelem for regelem in map.regulatoryElementLayer
                    if isinstance(regelem, RightOfWay)]
     assert right_of_way_regelem in rightOfWays
-    # must have the circular reference from the yielding lanelet
-    # otherwise, the last assertion will fail
-    # this should have been automatically inferred by the regulatoryElements
-    # getter function
+    # must have the circular reference from the yielding lanelet otherwise, the last assertion will fail
+    # this should have been automatically inferred by the regulatoryElements getter function
     yielding_lanelets[0].addRegulatoryElement(right_of_way_regelem)
     # This regulatory element should affect the yielding lanelet
     assert right_of_way_regelem in yielding_lanelets[0].regulatoryElements
